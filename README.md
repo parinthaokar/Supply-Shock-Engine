@@ -1,398 +1,159 @@
 # ⚡ Global Supply Chain Ingestion & Dynamic Pricing Engine
 
-> An end-to-end data engineering platform that simulates global supply chain disruptions, evaluates warehouse scarcity in real time, and dynamically reprices inventory using event-driven business logic.
-
----
+An end-to-end data engineering pipeline in Python and MySQL that automates API data ingestion, tracks inventory across a normalized relational schema, simulates an East Asia supplier crisis, and executes algorithmic dynamic pricing based on warehouse scarcity metrics.
 
 ## 📌 Project Overview
+This project models a real-world macroeconomic disruption scenario. When a major supplier region undergoes a shutdown, organizations must rapidly assess operational inventory levels and dynamically alter pricing strategies to defend profit margins.
 
-Modern supply chains are highly vulnerable to geopolitical events, regional shutdowns, and inventory shortages. Organizations must rapidly assess operational risk and adjust pricing strategies to maintain profitability.
-
-This project models a real-world supply chain disruption scenario through a complete data pipeline that:
-
-* Ingests external product data from an API
-* Stores operational data in a normalized MySQL database
-* Simulates geopolitical supply shocks
-* Dynamically reprices inventory based on scarcity
-* Generates executive-level business intelligence reports
-
-The system demonstrates core data engineering concepts including ETL development, relational database design, event-driven processing, transactional updates, and analytics reporting.
+This system achieves this through a custom operational pipeline that:
+1. **Ingests** external product data from a REST API into a raw JSON file.
+2. **Seeds and standardizes** the data into a normalized, 3-table MySQL database.
+3. **Simulates a regional supply crisis** by altering vendor risk attributes on the fly.
+4. **Triggers a custom pricing algorithm** to hike prices based on inventory counts.
+5. **Aggregates operational metrics** to output an executive portfolio financial risk summary.
 
 ---
 
-# 🏗️ System Architecture
-
+## 🏗️ System Architecture
 ```text
-                    ┌─────────────────────┐
-                    │ External Product API │
-                    └──────────┬──────────┘
-                               │
-                               ▼
-                 ┌─────────────────────────┐
-                 │ Python Ingestion Engine │
-                 │ (requests + filtering)  │
-                 └──────────┬──────────────┘
-                            │
-                            ▼
-                  JSON Landing Zone
-                            │
-                            ▼
-         ┌─────────────────────────────────────┐
-         │ Normalized MySQL Operational Store  │
-         ├─────────────────────────────────────┤
-         │ Products                            │
-         │ Vendors                             │
-         │ Warehouses                          │
-         │ Inventory                           │
-         └───────────────┬─────────────────────┘
-                         │
-                         ▼
-          Event-Driven Supply Shock Engine
-                         │
-                         ▼
-            Dynamic Pricing Algorithm
-                         │
-                         ▼
-           Transactional Database Updates
-                         │
-                         ▼
-               Analytics Reporting Layer
-                         │
-                         ▼
-         Executive Business Intelligence
-```
+┌─────────────────────┐
+│ External Product API│
+└──────────┬──────────┘
+           │ (requests)
+           ▼
+   JSON Landing Zone (products_raw.json)
+           │
+           ▼
+┌──────────────────────────────────────┐
+│  Normalized MySQL Relational Store   │
+├──────────────────────────────────────┤
+│ products ─── join ─── inventory      │
+│                         │            │
+│                       join           │
+│                         │            │
+│                       suppliers      │
+└──────────────────┬───────────────────┘
+                   │
+                   ▼
+    Event-Driven East Asia Shutdown 
+                   │
+                   ▼
+ Dynamic Pricing Engine (decimal.Decimal)
+                   │
+                   ▼
+  Single-Batch Transaction Commit
+                   │
+                   ▼
+Executive Analytics Summary (GROUP BY / SUM)
 
----
+🚀 Actual System Features
+🌍 REST API Data Ingestion
+Built an automated ingestion script (ingestion_products.py) that handles HTTP handshakes, queries an external REST API endpoint, filters raw JSON payloads down to necessary metadata attributes, and writes the stream to a local raw landing zone.
 
-# 🚀 Key Features
+🗄️ Normalized Relational Database Design
+Modeled a relational schema in MySQL to preserve referential integrity. The store consists of three highly coupled tables joined together via structured foreign keys:
 
-### 🌍 External Data Ingestion
+products: Maintains base prices and item identifiers.
 
-Built a Python-based ingestion engine that:
+suppliers: Stores vendor metadata, regional boundaries, and operational risk states.
 
-* Connects to external REST APIs
-* Extracts product metadata
-* Filters required business attributes
-* Stores clean datasets in a structured JSON landing zone
-* Creates reproducible datasets for downstream processing
+inventory: Maps physical tracking variables, joining specific products to their respective suppliers alongside localized unit balances.
 
----
+⚡ Event-Driven Crisis Simulation & Dynamic Pricing
+Simulates a real-time macroeconomic shock event (simulate_supply_shock.py).
 
-### 🗄️ Relational Data Modeling
+Intercepts and flags all vendors situated within the 'East Asia' region, updating their status to 'Critical Shutdown'.
 
-Designed a highly normalized MySQL schema to maintain strong data integrity across operational entities.
+Scans live inventory logs to evaluate scarcity metrics.
 
-Core dimensions include:
+Implements a scarcity-based feedback loop: low-stock items (< 150 units) receive a 50% dynamic price surge, while high-stock items (>= 150 units) receive a 20% surge.
 
-* Products
-* Vendors
-* Warehouses
-* Inventory Tracking
+Financial Precision Design: Leverages Python’s native decimal.Decimal module to completely eliminate floating-point rounding errors during multi-decimal multiplication, ensuring production-grade accuracy for financial accounting.
 
-Benefits:
+Batch Transaction Optimization: Executes all updates in memory and relies on a singular conn.commit() after loop termination to minimize network overhead and safely write changes to disk.
 
-* Reduced redundancy
-* Improved query performance
-* Strong referential integrity
-* Scalable relational architecture
+📊 Aggregated Executive Analytics
+Uses a heavy analytical aggregation query inside generate_analytics_report.py to extract high-level KPIs straight to the terminal interface. Utilizes multi-table relational joins, arithmetic evaluations (stock_quantity * base_price), and optimized database GROUP BY operations.
 
----
+🛠️ Tech Stack
+Language: Python 3
 
-### ⚡ Event-Driven Supply Shock Simulation
+Database Engine: MySQL Server
 
-Simulates a major geopolitical disruption where a supplier region becomes unavailable.
+API Integration: requests
 
-The engine:
+Drivers: mysql-connector-python
 
-1. Identifies affected inventory
-2. Calculates updated stock availability
-3. Evaluates warehouse scarcity
-4. Triggers pricing adjustments
-5. Commits transactional updates to the database
+Configuration & Security: python-dotenv
 
-This models real-world supply chain volatility and operational risk.
+Financial Modeling: decimal
 
----
+🔒 Security Architectures
+This project strictly adheres to production-grade credential management practices:
 
-### 💰 Dynamic Pricing Engine
+Environment Variable Isolation: Database hosts, root usernames, and access passwords are decoupled from codebase source files and isolated in a localized .env configuration file.
 
-A custom algorithm automatically adjusts product pricing based on inventory scarcity.
+Git Repository Protection: Configured a native .gitignore file to actively prevent the submission of hidden credentials or local caches (__pycache__/) to public version control.
 
-Example logic:
-
-```python
-if stock_level < 25:
-    price *= 1.20
-elif stock_level < 50:
-    price *= 1.10
-```
-
-Key implementation details:
-
-* Uses `decimal.Decimal` for financial precision
-* Eliminates floating-point rounding errors
-* Supports transactional batch updates
-* Maintains pricing consistency across regions
-
----
-
-### 📊 Analytics & Business Intelligence
-
-Aggregates operational data into executive-level metrics using optimized SQL queries.
-
-Metrics include:
-
-* Total products monitored
-* Average inventory levels
-* Portfolio value at risk
-* Regional exposure analysis
-* Inventory concentration metrics
-
-Built using:
-
-```sql
-SUM()
-AVG()
-COUNT()
-GROUP BY
-INNER JOIN
-```
-
----
-
-# 🛠️ Tech Stack
-
-| Category               | Technology             |
-| ---------------------- | ---------------------- |
-| Language               | Python 3               |
-| Database               | MySQL                  |
-| API Integration        | Requests               |
-| Database Connector     | mysql-connector-python |
-| Environment Management | python-dotenv          |
-| Financial Precision    | decimal.Decimal        |
-| Data Storage           | JSON                   |
-| Query Language         | SQL                    |
-
----
-
-# 🔒 Security Best Practices
-
-This project follows industry-standard credential management practices.
-
-### Environment Variable Isolation
-
-Sensitive database credentials are stored in a local `.env` file and excluded from version control.
-
-Example:
-
-```env
-DB_HOST=localhost
-DB_USER=username
-DB_PASSWORD=password
-DB_NAME=supply_chain_db
-```
-
-### Git Protection
-
-```gitignore
-.env
-__pycache__/
-*.pyc
-```
-
-Benefits:
-
-* Prevents accidental credential exposure
-* Keeps repositories secure
-* Follows production-grade deployment practices
-
----
-
-# 📈 Sample Executive Report
-
-```text
+📈 Live Terminal Executive Report Output
+Plaintext
 ====================================================
-        GLOBAL SUPPLY CHAIN EXECUTIVE REPORT
+        GLOBAL SUPPLY CHAIN EXECUTIVE REPORT        
 ====================================================
 
 🌍 REGION: East Asia
-
-   • Total Monitored Products: 7
-
-   • Total Portfolio Value At Risk:
-     $14,842.50
-
-   • Average Regional Warehouse Stock:
-     112.4 units
-
+   - Total Monitored Products: 7
+   - Total Portfolio Value At Risk: $14,842.50
+   - Average Regional Warehouse Stock: 112.4 units
 ----------------------------------------------------
-
-🌍 REGION: North America
-
-   • Total Monitored Products: 12
-
-   • Total Portfolio Value At Risk:
-     $22,910.00
-
-   • Average Regional Warehouse Stock:
-     147.8 units
-
-----------------------------------------------------
-
-🌍 REGION: Europe
-
-   • Total Monitored Products: 9
-
-   • Total Portfolio Value At Risk:
-     $18,330.25
-
-   • Average Regional Warehouse Stock:
-     98.7 units
-
-====================================================
-```
-
----
-
-# 📂 Project Structure
-
-```text
+📂 Project Structure
+Plaintext
 supply_shock_engine/
 │
-├── ingestion_products.py
-├── seed_operational_data.py
-├── simulate_supply_shock.py
-├── generate_analytics_report.py
+├── .env.example                  # Template file for local DB setup
+├── .gitignore                    # Ensures .env stays hidden on your machine
+├── db_connection.py              # Central database configuration utility
+├── ingestion_products.py         # Step 1: API ingestion engine
+├── seed_operational_data.py      # Step 2: Relational seeding script
+├── simulate_supply_shock.py      # Step 3: Crisis & dynamic pricing logic
+├── generate_analytics_report.py  # Step 4: Analytical executive KPI script
 │
-├── data/
-│   └── products.json
-│
-├── sql/
-│   └── schema.sql
-│
-├── .env.example
-├── requirements.txt
-├── README.md
-│
-└── screenshots/
-```
-
----
-
-# ⚙️ Installation
-
+├── products_raw.json             # Milestone 1 raw JSON file dump
+└── supply_chain_db.sql           # Database schema & layout exports
+⚙️ Installation & Deployment
 Clone the repository:
 
-```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/supply_shock_engine.git
-
+Bash
+git clone [https://github.com/YOUR_GITHUB_USERNAME/supply_shock_engine.git](https://github.com/YOUR_GITHUB_USERNAME/supply_shock_engine.git)
 cd supply_shock_engine
-```
+Install core dependencies:
 
-Install dependencies:
+Bash
+pip install mysql-connector-python python-dotenv requests
+Configure Environment Variables:
 
-```bash
-pip install mysql-connector-python
-pip install python-dotenv
-pip install requests
-```
+Duplicate .env.example and rename the copy to .env
 
----
+Populate the file with your local database credentials:
 
-# 🔧 Environment Setup
-
-Create a local `.env` file:
-
-```env
+Plaintext
 DB_HOST=localhost
 DB_USER=your_username
 DB_PASSWORD=your_password
-DB_NAME=your_database
-```
+DB_NAME=supply_chain_db
+Execute Pipeline Lifecycle Sequentially:
 
----
-
-# ▶️ Running The Pipeline
-
-Execute each stage sequentially:
-
-### 1. Ingest Product Data
-
-```bash
+Bash
 python3 ingestion_products.py
-```
-
-### 2. Seed Operational Database
-
-```bash
 python3 seed_operational_data.py
-```
-
-### 3. Simulate Supply Chain Disruption
-
-```bash
 python3 simulate_supply_shock.py
-```
-
-### 4. Generate Executive Analytics
-
-```bash
 python3 generate_analytics_report.py
-```
+🎯 Core Technical Skills Exhibited
+Data Pipelines: End-to-end local ETL, raw data file processing, JSON parsing.
 
----
+Database Engineering: Normalized Relational Database Design, SQL Joins & Aggregations, Transaction Commit Auditing.
 
-# 🎯 Skills Demonstrated
+Backend Programming: Event-Driven Logic Flow, Error-free Data Type Casting (Decimal), Secure Infrastructure Design (dotenv).
 
-### Data Engineering
-
-* ETL Pipeline Development
-* API Integration
-* Data Transformation
-* Data Quality Validation
-
-### Database Engineering
-
-* Relational Schema Design
-* Database Normalization
-* SQL Query Optimization
-* Referential Integrity
-
-### Backend Engineering
-
-* Event-Driven Processing
-* Transaction Management
-* Financial Precision Handling
-* Batch Operations
-
-### Analytics Engineering
-
-* KPI Generation
-* Business Intelligence Reporting
-* Aggregation Frameworks
-* Operational Metrics
-
----
-
-# 📚 Future Enhancements
-
-Potential production-grade upgrades:
-
-* Apache Airflow orchestration
-* Kafka event streaming
-* Docker containerization
-* AWS S3 data lake integration
-* dbt transformation layer
-* Power BI dashboarding
-* Real-time inventory monitoring
-* Machine learning demand forecasting
-
----
-
-# 👨‍💻 Author
-
-**Parin Thaokar**
-
-Data Engineering • Analytics Engineering • Backend Systems
-
-Built to demonstrate practical ETL development, relational database design, event-driven architecture, and business intelligence workflows in a real-world supply chain scenario.
+👨‍💻 Author
+Parin Thaokar Data Engineering • Analytics Engineering • Backend Systems
