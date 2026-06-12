@@ -1,5 +1,7 @@
 # ⚡ Global Supply Chain Ingestion & Dynamic Pricing Engine
 
+During the 2021 semiconductor shortage, companies discovered their biggest vulnerability wasn't the supply disruption itself — it was that their pricing infrastructure couldn't react fast enough. Procurement teams were manually updating spreadsheets while margins eroded in real time. This project engineers the automated response they didn't have.
+
 An end-to-end data engineering pipeline built with Python and MySQL that automates API data ingestion, tracks inventory through a normalized relational schema, simulates an East Asia supplier crisis, and dynamically reprices products using warehouse scarcity metrics.
 
 ---
